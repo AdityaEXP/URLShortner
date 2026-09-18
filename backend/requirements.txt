@@ -1,0 +1,8 @@
+flask
+psycopg2-binary
+python-dotenv
+pydantic[email]
+bcrypt
+pyjwt
+redis
+apscheduler
