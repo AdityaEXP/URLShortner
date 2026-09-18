@@ -6,7 +6,6 @@ import Toast from './components/Toast'
 
 export default function App() {
   const [token, setToken] = useLocalStorage('token', null)
-  const [links, setLinks] = useLocalStorage('links', [])
   const [toast, setToast] = useState(null)
 
   const showToast = useCallback((message, type) => {
@@ -23,8 +22,6 @@ export default function App() {
       {token ? (
         <Dashboard
           token={token}
-          links={links}
-          setLinks={setLinks}
           onLogout={handleLogout}
           showToast={showToast}
         />

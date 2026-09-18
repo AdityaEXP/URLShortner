@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import BaseModel, HttpUrl, Field, field_validator
 
-RESERVED_ALIASES = {"shorten", "stats", "analytics", "auth", "static"}
+RESERVED_ALIASES = {"shorten", "stats", "analytics", "auth", "static", "my-links"}
 
 
 class ShortenRequest(BaseModel):

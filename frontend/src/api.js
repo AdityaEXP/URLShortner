@@ -69,3 +69,9 @@ export function fetchStats(code) {
 export function fetchAnalytics() {
   return request('/analytics')
 }
+
+export function fetchMyLinks(token) {
+  return request('/my-links', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+}

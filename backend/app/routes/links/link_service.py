@@ -143,6 +143,33 @@ def delete_link(code: str, owner_id: int) -> None:
     discard_pending_clicks(code)
 
 
+def get_user_links(owner_id: int) -> list[dict]:
+    with database.get_connection() as connection:
+        with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+            cursor.execute(
+                """
+                SELECT short_code, original_url, click_count, expires_at, created_at
+                FROM links
+                WHERE owner_id = %s
+                ORDER BY created_at DESC
+                """,
+                (owner_id,),
+            )
+            rows = cursor.fetchall()
+
+    return [
+        {
+            "short_code": row["short_code"],
+            "short_url": f"{BASE_URL}/{row['short_code']}",
+            "original_url": row["original_url"],
+            "click_count": row["click_count"] + get_pending_clicks(row["short_code"]),
+            "expires_at": row["expires_at"].isoformat() if row["expires_at"] else None,
+            "created_at": row["created_at"].isoformat(),
+        }
+        for row in rows
+    ]
+
+
 def get_top_links(count: int = 5) -> list[dict]:
     with database.get_connection() as connection:
         with connection.cursor(cursor_factory=RealDictCursor) as cursor:

@@ -6,6 +6,7 @@ from app.routes.links.link_service import (
     delete_link,
     get_link_stats,
     get_top_links,
+    get_user_links,
     resolve_link,
 )
 from app.routes.links.schemas import ShortenRequest
@@ -33,6 +34,12 @@ def stats(code):
 @link_bp.get("/analytics")
 def analytics():
     return jsonify(get_top_links(5)), 200
+
+
+@link_bp.get("/my-links")
+def my_links():
+    owner_id = get_current_user_id()
+    return jsonify(get_user_links(owner_id)), 200
 
 
 @link_bp.get("/<code>")

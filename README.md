@@ -1,19 +1,20 @@
 # URL Shortener
 
-Flask API + a small React dashboard. Track B spec: shorten, redirect, stats, delete, with collision handling, expiry, rate limiting, caching, and auth.
+Flask API and a small React dashboard. Track B spec, shorten, redirect, stats, delete, with collision handling, expiry, rate limiting, caching, and auth.
 
 ## Stack
 
-- Backend: Flask, Postgres, Redis, JWT + API key auth
-- Frontend: React + Vite, Tailwind
+- Backend, Flask, Postgres, Redis, JWT and API key auth
+- Frontend, React, Vite and Tailwind
 - Rate limiting, short code generation, and click counting are hand rolled, no flask-limiter or shortuuid
 
 ## Deployed
 
-- Frontend: https://url-shortner-bay-phi.vercel.app
-- Backend: https://urlshortner-2u1f.onrender.com
+- Frontend, https://url-shortner-bay-phi.vercel.app
+- Backend, https://urlshortner-2u1f.onrender.com
+- Test account, test@gmail.com, password 12345678
 
-Backend is on Render free tier, sleeps after 15 min idle, first request after that can take 40-50s.
+Backend is on Render free tier, sleeps after 15 min idle, first request after that can take 40 to 50 seconds.
 
 ## Running it locally
 
@@ -38,14 +39,15 @@ npm run dev                  # localhost:5173
 |---|---|---|---|
 | POST | `/auth/signup` | none | returns a JWT |
 | POST | `/auth/login` | none | returns a JWT |
-| POST | `/auth/api-key` | JWT | generates/rotates an API key, shown once |
+| POST | `/auth/api-key` | JWT | generates or rotates an API key, shown once |
 | POST | `/shorten` | JWT | rate limited per IP |
+| GET | `/my-links` | JWT | all links owned by the current user |
 | GET | `/<code>` | none | 302 redirect, 404 if missing, 410 if expired |
 | GET | `/stats/<code>` | none | click count, created_at |
 | DELETE | `/<code>` | JWT or API key | must own the link |
 | GET | `/analytics` | none | top 5 by clicks |
 
-`POST /shorten`:
+`POST /shorten` example.
 ```json
 { "url": "https://example.com/some/long/path", "alias": "myco", "expires_in_minutes": 60 }
 ```
@@ -56,10 +58,10 @@ npm run dev                  # localhost:5173
 
 ## A few things worth asking about
 
-- Short codes are `sha256(url + id)` in base62, not `base62(id)` directly, so codes aren't sequential/guessable. Collisions retry with a fresh Postgres sequence id.
-- `/<code>` is Redis-cached with a TTL capped by the link's own expiry, plus negative caching so bogus codes don't keep hitting Postgres.
-- Click counts go through Redis `INCR` and get flushed to Postgres every 5s by a background worker, instead of a DB write per redirect.
-- Rate limiting is Redis `INCR`+`EXPIRE`, fixed window, chosen over a sliding window for simplicity. Known tradeoff: up to 2x burst right at the window boundary.
+- Short codes are `sha256(url + id)` in base62, not `base62(id)` directly, so codes are not sequential and not guessable. Collisions retry with a fresh Postgres sequence id.
+- `/<code>` is cached in Redis with a TTL capped by the link's own expiry, plus negative caching so bogus codes do not keep hitting Postgres.
+- Click counts go through Redis `INCR` and get flushed to Postgres every 5 seconds by a background worker, instead of a DB write per redirect.
+- Rate limiting is Redis `INCR` and `EXPIRE`, fixed window, chosen over a sliding window for simplicity. There is a known tradeoff, up to 2x burst can happen right at the window boundary.
 - `/analytics` queries Postgres directly instead of a Redis leaderboard. Considered `ZINCRBY`, dropped it since keeping it in sync on delete was the harder part, not the read speed.
 - `DELETE` accepts either a JWT or an API key, so the dashboard and scripts both work without extra hoops.
 - Redirect is 302, not 301, so the server still sees every click instead of the browser caching it away.
@@ -67,5 +69,5 @@ npm run dev                  # localhost:5173
 ## Not done
 
 - No automated tests, tested by hand against a live server
-- No phishing/malware blocklist
-- Assumes a single backend instance (safe under multiple, just some duplicate flush work)
+- No phishing or malware blocklist
+- Assumes a single backend instance. Running multiple is safe, just does some duplicate flush work

@@ -1,16 +1,37 @@
-import { LogOut, Link2 } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { LogOut, Link2, Loader2 } from 'lucide-react'
+import * as api from '../api'
 import ApiKeyCard from './ApiKeyCard'
 import CreateLinkForm from './CreateLinkForm'
 import LinksList from './LinksList'
 import AnalyticsPanel from './AnalyticsPanel'
 
-export default function Dashboard({ token, links, setLinks, onLogout, showToast }) {
+export default function Dashboard({ token, onLogout, showToast }) {
+  const [links, setLinks] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  const loadLinks = useCallback(async () => {
+    setLoading(true)
+    try {
+      const data = await api.fetchMyLinks(token)
+      setLinks(data)
+    } catch (err) {
+      showToast(err.message, 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [token, showToast])
+
+  useEffect(() => {
+    loadLinks()
+  }, [loadLinks])
+
   function handleCreated(link) {
-    setLinks([link, ...links])
+    setLinks((prev) => [link, ...prev])
   }
 
   function handleDelete(code) {
-    setLinks(links.filter((link) => link.short_code !== code))
+    setLinks((prev) => prev.filter((link) => link.short_code !== code))
   }
 
   return (
@@ -34,7 +55,15 @@ export default function Dashboard({ token, links, setLinks, onLogout, showToast 
 
         <ApiKeyCard token={token} showToast={showToast} />
         <CreateLinkForm token={token} onCreated={handleCreated} showToast={showToast} />
-        <LinksList token={token} links={links} onDelete={handleDelete} showToast={showToast} />
+
+        {loading ? (
+          <div className="flex justify-center py-8 text-gray-500">
+            <Loader2 size={20} className="animate-spin" />
+          </div>
+        ) : (
+          <LinksList token={token} links={links} onDelete={handleDelete} showToast={showToast} />
+        )}
+
         <AnalyticsPanel />
       </div>
     </div>
