@@ -71,3 +71,37 @@ npm run dev                  # localhost:5173
 - No automated tests, tested by hand against a live server
 - No phishing or malware blocklist
 - Assumes a single backend instance. Running multiple is safe, just does some duplicate flush work
+
+## Architecture
+
+Frontend and backend are separate deployments. Backend reads and writes Postgres directly and uses Redis for caching, rate limits, and click counters. A background worker inside the backend flushes pending click counts from Redis to Postgres every few seconds.
+
+```mermaid
+flowchart LR
+    User((Browser))
+
+    subgraph Vercel
+        Frontend[React dashboard]
+    end
+
+    subgraph Render
+        Backend[Flask API]
+        Worker[Click flush worker]
+    end
+
+    subgraph Neon
+        Postgres[(Postgres)]
+    end
+
+    subgraph Upstash
+        Redis[(Redis)]
+    end
+
+    User -->|dashboard| Frontend
+    User -->|short link click| Backend
+    Frontend -->|REST calls| Backend
+    Backend -->|cache and rate limits| Redis
+    Backend -->|users and links| Postgres
+    Worker -->|read pending clicks| Redis
+    Worker -->|flush every 5s| Postgres
+```
