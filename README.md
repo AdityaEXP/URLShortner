@@ -157,7 +157,7 @@ The endpoint is rate limited by IP
 
 A 429 response is returned after the limit is reached
 
-### GET /<code>
+### `GET /<code>`
 
 Returns a 302 redirect to the original URL
 
@@ -165,7 +165,7 @@ Returns 404 when the code does not exist
 
 Returns 410 when the link has expired
 
-### GET /stats/<code>
+### `GET /stats/<code>`
 
 Returns the original URL click count and creation time
 
@@ -179,7 +179,7 @@ Example
 }
 ```
 
-### DELETE /<code>
+### `DELETE /<code>`
 
 Needs either a JWT or an API key
 
@@ -296,7 +296,7 @@ This also rejects things such as javascript URLs without needing a custom regex
 
 ### Caching
 
-GET /<code> checks Redis before checking Postgres
+`GET /<code>` checks Redis before checking Postgres
 
 If the link is already cached then Postgres is not touched
 
