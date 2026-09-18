@@ -1,6 +1,6 @@
 # URL Shortener
 
-A URL shortener with a Flask API and a small React dashboard on top. Built against the Track B spec — shorten/redirect/stats/delete, plus the collision handling, expiry, rate limiting and auth pieces the assignment specifically asks for.
+A URL shortener with a Flask API and a small React dashboard on top. Built against the Track B spec: shorten/redirect/stats/delete, plus the collision handling, expiry, rate limiting and auth pieces the assignment specifically asks for.
 
 ## Stack
 
@@ -17,7 +17,7 @@ You need Postgres and Redis reachable somewhere (both default to `localhost` in 
 ```
 cd backend
 python -m venv venv
-venv\Scripts\activate        # source venv/bin/activate on mac/linux
+venv\Scripts\activate       
 pip install -r requirements.txt
 copy .env.example .env       # fill in DB_URL, SECRET_KEY, REDIS_URL
 python run.py
@@ -113,6 +113,8 @@ Short codes are `sha256(url + id)`, re-encoded in base62, truncated to 7 charact
 Went with hashing the id instead of just base62-encoding it directly, even though `base62(id)` alone would never collide. The reason: `base62(id)` is sequential and guessable — id 1, 2, 3... means anyone can enumerate every link ever created just by walking the numbers. Hashing first breaks that at the cost of needing the retry logic.
 
 Also switched from plain hex to base62 partway through — hex only gives `16^7` (~268M) possible codes, base62 gives `62^7` (~3.5 trillion), which matters a lot once you think about collision odds at real scale.
+
+Decided to move flush click outside of the api as seperate worker, cause if there are multiple instance it will be safe but there will be duplicated work.
 
 ### Auth: JWT and API key, not just one
 DELETE accepts either a JWT or an API key. JWT covers the case where the frontend already has you logged in and shouldn't need a separate key just to delete something you made. The API key exists because the assignment specifically wants delete protected by "an API key header" for script/programmatic use. It's stored hashed with sha256, not bcrypt — the key is already high-entropy since we generate it (nothing to brute-force), and bcrypt's random salt would make it impossible to look up by exact match on every request anyway.
