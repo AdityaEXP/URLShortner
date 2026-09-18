@@ -56,9 +56,11 @@ npm run dev                  # localhost:5173
 ```
 `alias` and `expires_in_minutes` are optional.
 
-## A few things worth asking about
+## Decisions
 
-- Short codes are `sha256(url + id)` in base62, not `base62(id)` directly, so codes are not sequential and not guessable. Collisions retry with a fresh Postgres sequence id.
+- Short codes come from `sha256(url + id)` encoded in base62, not `base62(id)` directly. The id is reserved from the Postgres sequence before the row is inserted, so a collision retry just grabs a fresh id and hashes again, no extra randomness needed. Base62 alone would give zero collisions, but the codes would be sequential and guessable, hashing first stops that. Base62 also gives far more room than hex, 62 to the power of 7 is about 3.5 trillion codes compared to 268 million for hex, which matters once you think about collision odds at real scale.
+- Aliases go through a blocklist of words that match real routes, like analytics, stats, and shorten. Flask matches a static route before the dynamic redirect route, so an alias with one of those names would be permanently unreachable without the check.
+- The url field uses pydantic HttpUrl, which only allows http and https, and rejects things like javascript links without a custom regex.
 - `/<code>` is cached in Redis with a TTL capped by the link's own expiry, plus negative caching so bogus codes do not keep hitting Postgres.
 - Click counts go through Redis `INCR` and get flushed to Postgres every 5 seconds by a background worker, instead of a DB write per redirect.
 - Rate limiting is Redis `INCR` and `EXPIRE`, fixed window, chosen over a sliding window for simplicity. There is a known tradeoff, up to 2x burst can happen right at the window boundary.
@@ -66,11 +68,6 @@ npm run dev                  # localhost:5173
 - `DELETE` accepts either a JWT or an API key, so the dashboard and scripts both work without extra hoops.
 - Redirect is 302, not 301, so the server still sees every click instead of the browser caching it away.
 
-## Not done
-
-- No automated tests, tested by hand against a live server
-- No phishing or malware blocklist
-- Assumes a single backend instance. Running multiple is safe, just does some duplicate flush work
 
 ## Architecture
 
