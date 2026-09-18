@@ -17,7 +17,8 @@ def create_app() -> Flask:
     app.register_blueprint(auth_bp)
     app.register_blueprint(link_bp)
 
-    start_flush_loop()
+    start_flush_loop() #only valid for single worker
+    # for multiple worker we need to run seperately!!
 
     @app.after_request
     def add_cors_headers(response):
